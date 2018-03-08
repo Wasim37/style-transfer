@@ -5,8 +5,8 @@ import tensorflow as tf, numpy as np, os
 import transform
 from utils import get_img
 
-STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
-CONTENT_LAYER = 'relu4_2'
+STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')  # 特征层
+CONTENT_LAYER = 'relu4_2'  # 只取一个层即可
 DEVICES = 'CUDA_VISIBLE_DEVICES'
 
 # np arr, np arr
@@ -16,6 +16,8 @@ def optimize(content_targets, style_target, content_weight, style_weight,
              learning_rate=1e-3, debug=False):
     if slow:
         batch_size = 1
+
+    # 去除多余数据，因为构不成一个batch_size
     mod = len(content_targets) % batch_size
     if mod > 0:
         print("Train set has been trimmed slightly..")
@@ -23,23 +25,24 @@ def optimize(content_targets, style_target, content_weight, style_weight,
 
     style_features = {}
 
-    batch_shape = (batch_size,256,256,3)
+    batch_shape = (batch_size, 256, 256, 3)
     style_shape = (1,) + style_target.shape
     #print(style_shape)
 
     # precompute style features
     with tf.Graph().as_default(), tf.device('/cpu:0'), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
-        style_image_pre = vgg.preprocess(style_image)
-        net = vgg.net(vgg_path, style_image_pre)
+        style_image_pre = vgg.preprocess(style_image)  # 预处理操作，减均值
+        net = vgg.net(vgg_path, style_image_pre)  # 读取vgg模型，迭代预处理后的数据
         style_pre = np.array([style_target])
         for layer in STYLE_LAYERS:
             features = net[layer].eval(feed_dict={style_image:style_pre})
-            features = np.reshape(features, (-1, features.shape[3]))
+            features = np.reshape(features, (-1, features.shape[3])) # 对每个特征图进行操作
             #print (features.shape)
             gram = np.matmul(features.T, features) / features.size
             style_features[layer] = gram
 
+    # precompute content features
     with tf.Graph().as_default(), tf.Session() as sess:
         X_content = tf.placeholder(tf.float32, shape=batch_shape, name="X_content")
         X_pre = vgg.preprocess(X_content)

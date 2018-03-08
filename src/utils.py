@@ -9,7 +9,7 @@ def scale_img(style_path, style_scale):
     o0, o1, o2 = scipy.misc.imread(style_path, mode='RGB').shape
     scale = float(style_scale)
     new_shape = (int(o0 * scale), int(o1 * scale), o2)
-    style_target = _get_img(style_path, img_size=new_shape)
+    style_target = get_img(style_path, img_size=new_shape)
     return style_target
 
 def get_img(src, img_size=False):

@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys, os, pdb
 sys.path.insert(0, 'src')
-import numpy as np, scipy.misc 
+import numpy as np, scipy.misc  # 处理图像的包 misc
 from optimize import optimize
 from argparse import ArgumentParser
 from utils import save_img, get_img, exists, list_files
@@ -9,19 +9,21 @@ import evaluate
 
 CONTENT_WEIGHT = 7.5e0
 STYLE_WEIGHT = 1e2
-TV_WEIGHT = 2e2
+TV_WEIGHT = 2e2  # 权变差？
 
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 1e-3  # 学习率
 NUM_EPOCHS = 2
 CHECKPOINT_DIR = 'checkpoints'
-CHECKPOINT_ITERATIONS = 2000
-VGG_PATH = 'data/imagenet-vgg-verydeep-19.mat'
-TRAIN_PATH = 'data/train2014'
-BATCH_SIZE = 4
+CHECKPOINT_ITERATIONS = 2000  # 迭代次数？
+VGG_PATH = 'data/imagenet-vgg-verydeep-19.mat'  # VGG模型
+TRAIN_PATH = 'data/train2014'  # 训练数据路径
+BATCH_SIZE = 4  # 每次迭代的图片数量
 DEVICE = '/gpu:0'
 FRAC_GPU = 1
 
-def build_parser():
+
+# 命令行参数解析
+def build_parser() -> object:
     parser = ArgumentParser()
     parser.add_argument('--checkpoint-dir', type=str,
                         dest='checkpoint_dir', help='dir to save checkpoint in',
@@ -87,6 +89,8 @@ def build_parser():
 
     return parser
 
+
+# 检测参数是否正确
 def check_opts(opts):
     exists(opts.checkpoint_dir, "checkpoint dir not found!")
     exists(opts.style, "style path not found!")
@@ -104,6 +108,7 @@ def check_opts(opts):
     assert opts.tv_weight >= 0
     assert opts.learning_rate >= 0
 
+
 def _get_files(img_dir):
     files = list_files(img_dir)
     return [os.path.join(img_dir,x) for x in files]
@@ -114,6 +119,7 @@ def main():
     options = parser.parse_args()
     check_opts(options)
 
+    # 获取风格图片路径
     style_target = get_img(options.style)
     if not options.slow:
         content_targets = _get_files(options.train_path)
@@ -144,6 +150,8 @@ def main():
         options.vgg_path
     ]
 
+    # 最核心的代码
+    #  迭代优化代码
     for preds, losses, i, epoch in optimize(*args, **kwargs):
         style_loss, content_loss, tv_loss, loss = losses
 
@@ -158,7 +166,8 @@ def main():
                 evaluate.ffwd_to_img(options.test,preds_path,
                                      options.checkpoint_dir)
             else:
-                save_img(preds_path, img)
+                pass
+                # save_img(preds_path, img)
     ckpt_dir = options.checkpoint_dir
     cmd_text = 'python evaluate.py --checkpoint %s ...' % ckpt_dir
     print("Training complete. For evaluation:\n    `%s`" % cmd_text)

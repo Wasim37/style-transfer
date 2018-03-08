@@ -131,7 +131,7 @@ def ffwd(data_in, paths_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
         img_shape = get_img(data_in[0]).shape
     else:
         assert data_in.size[0] == len(paths_out)
-        img_shape = X[0].shape
+        # img_shape = X[0].shape
 
     g = tf.Graph()
     batch_size = min(len(paths_out), batch_size)

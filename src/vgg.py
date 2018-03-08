@@ -5,8 +5,8 @@ import numpy as np
 import scipy.io
 import pdb
 
-MEAN_PIXEL = np.array([ 123.68 ,  116.779,  103.939])
 
+# 专注的是其中的卷积层
 def net(data_path, input_image):
     layers = (
         'conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1',
@@ -23,21 +23,21 @@ def net(data_path, input_image):
         'relu5_3', 'conv5_4', 'relu5_4'
     )
 
-    data = scipy.io.loadmat(data_path)
-    mean = data['normalization'][0][0][0]
-    mean_pixel = np.mean(mean, axis=(0, 1))
-    weights = data['layers'][0]
+    data = scipy.io.loadmat(data_path)  # 用io模块加载训练好的vgg
+    mean = data['normalization'][0][0][0]  # 取vgg模型中的参数
+    mean_pixel = np.mean(mean, axis=(0, 1))  # pixel？
+    weights = data['layers'][0]  # 取出所有的权重
 
-    net = {}
+    net = {}  # 定义一个网络
     current = input_image
     for i, name in enumerate(layers):
         kind = name[:4]
         if kind == 'conv':
-            kernels, bias = weights[i][0][0][0][0]
+            kernels, bias = weights[i][0][0][0][0]  # 四个0是mat文件的读取方式
             # matconvnet: weights are [width, height, in_channels, out_channels]
             # tensorflow: weights are [height, width, in_channels, out_channels]
-            kernels = np.transpose(kernels, (1, 0, 2, 3))
-            bias = bias.reshape(-1)
+            kernels = np.transpose(kernels, (1, 0, 2, 3))  # 让读取出的mat权重和tensorflow相对应
+            bias = bias.reshape(-1)  # 一维数据即可
             current = _conv_layer(current, kernels, bias)
         elif kind == 'relu':
             current = tf.nn.relu(current)
@@ -59,6 +59,10 @@ def _pool_layer(input):
     return tf.nn.max_pool(input, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1),
             padding='SAME')
 
+
+# VGG在训练前，会减均值，我们也可以做同样的操作
+# 下面的RGB均值是官方训练大量数据后给出的均值
+MEAN_PIXEL = np.array([ 123.68 ,  116.779,  103.939])
 
 def preprocess(image):
     return image - MEAN_PIXEL
