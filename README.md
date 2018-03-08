@@ -8,3 +8,6 @@ Benchmark 一般是行业标准
 
 evaluate.py执行生成命令
 "--checkpoint ./model/la_muse.ckpt --in-path ./examples/content/dog.jpg --out-path ./"
+
+style.py执行生成命令
+"--checkpoint-dir ./model/ --style ./style/wave.jpg"
